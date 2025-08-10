@@ -38,6 +38,7 @@ def answer(call):
         stop = time.time() + (frames / 8000)  # frames / sample rate in seconds
         while time.time() <= stop and call.state == CallState.ANSWERED:
             time.sleep(0.1)
+        call.hangup()
 
     except InvalidStateError:
         pass
@@ -47,9 +48,9 @@ def answer(call):
             RuntimeWarning,
             stacklevel=2,
         )
-    finally:
-        print(f"ended from: {call.request.headers["From"]["raw"]}")
         call.hangup()
+    finally:
+        print(f"ended call from: {call.request.headers["From"]["raw"]}")
 
 
 def encode_packet(self, payload: bytes) -> bytes:
