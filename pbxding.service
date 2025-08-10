@@ -5,6 +5,7 @@ After=network-online.target
 
 [Service]
 Type=simple
+KillSignal=SIGINT
 WorkingDirectory=/opt/pbxding/
 EnvironmentFile=/opt/pbxding/.env
 Restart=on-failure
