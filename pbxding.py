@@ -20,38 +20,40 @@ CALL_HIST = Histogram('tasse_calls', 'Call Histogram')
 @CALL_TIME.time()
 @CALL_HIST.time()
 def answer(call):
-    try:
-        # Load WAV file (8-bit, 8000 Hz, mono)
-        f = wave.open(os.getenv("TASSE_KAFFEE", "tasse-lang.wav"), 'rb')
-        frames = f.getnframes()
-        data = f.readframes(frames)
-        f.close()
+    from_number = call.request.headers["From"]["raw"] #todo only name/number
+    with CALL_TIME.labels(from_number).time(), CALL_HIST.labels(from_number).time():
+        try:
+            # Load WAV file (8-bit, 8000 Hz, mono)
+            f = wave.open(os.getenv("TASSE_KAFFEE", "tasse-lang.wav"), 'rb')
+            frames = f.getnframes()
+            data = f.readframes(frames)
+            f.close()
 
-        # Answer the call
-        call.answer()
+            # Answer the call
+            call.answer()
 
-        # Transmit audio data bytes
-        call.write_audio(data)
-        print(f"got a call from: {call.request.headers["From"]["raw"]}")
+            # Transmit audio data bytes
+            call.write_audio(data)
+            print(f"got a call from: {call.request.headers["From"]["raw"]}")
 
 
-        # Wait while call is answered and audio duration not exceeded
-        stop = time.time() + (frames / 8000)  # frames / sample rate in seconds
-        while time.time() <= stop and call.state == CallState.ANSWERED:
-            time.sleep(0.1)
-        call.hangup()
+            # Wait while call is answered and audio duration not exceeded
+            stop = time.time() + (frames / 8000)  # frames / sample rate in seconds
+            while time.time() <= stop and call.state == CallState.ANSWERED:
+                time.sleep(0.1)
+            call.hangup()
 
-    except InvalidStateError:
-        pass
-    except Exception:
-        warnings.warn(
-            "call failed!",
-            RuntimeWarning,
-            stacklevel=2,
-        )
-        call.hangup()
-    finally:
-        print(f"ended call from: {call.request.headers["From"]["raw"]}")
+        except InvalidStateError:
+            pass
+        except Exception:
+            warnings.warn(
+                "call failed!",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            call.hangup()
+        finally:
+            print(f"ended call from: {call.request.headers["From"]["raw"]}")
 
 
 def encode_packet(self, payload: bytes) -> bytes:
