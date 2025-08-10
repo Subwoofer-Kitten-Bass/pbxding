@@ -3,7 +3,9 @@ import os
 import signal
 import warnings
 
-from prometheus_client import start_http_server, Summary
+
+from flask import Flask, jsonify
+from prometheus_client import start_http_server, Summary, generate_latest, CONTENT_TYPE_LATEST
 from pyVoIP.RTP import RTPParseError, PayloadType, RTPClient
 from pyVoIP.VoIP import VoIPPhone, InvalidStateError, CallState
 import wave
@@ -114,6 +116,19 @@ def trans(self) -> None:
         self.outSequence += 1
         self.outTimestamp += len(payload)
 
+app = Flask(__name__)
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint."""
+    # You can include additional checks here (e.g. database connectivity, third-party services)
+    health = 'OK'
+    return health, 200
+
+@app.route('/metrics', methods=['GET'])
+def metrics():
+    """ Exposes application metrics in a Prometheus-compatible format. """
+    return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
 
 if __name__ == "__main__":
     RTPClient.encode_packet = encode_packet
@@ -139,13 +154,11 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, handler)
     signal.signal(signal.SIGHUP, handler)
 
-    start_http_server(8000)
-
     try:
         print(f"Starting the pbx ding listener")
         phone.start()
-        while True:
-            time.sleep(1)
+
+        app.run(host='0.0.0.0', port=8000)
     except KeyboardInterrupt:
         print(f"Stopping the pbx ding")
         phone.stop()
