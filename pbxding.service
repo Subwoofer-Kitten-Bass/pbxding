@@ -4,7 +4,11 @@ Requires=network-online.target
 After=network-online.target
 
 [Service]
+Type=simple
 WorkingDirectory=/opt/pbxding/
 EnvironmentFile=/opt/pbxding/.env
 Restart=on-failure
 ExecStart=/opt/pbxding/.venv/python3 -u /opt/pbxding/pbxding.py
+
+[Install]
+WantedBy=multi-user.target

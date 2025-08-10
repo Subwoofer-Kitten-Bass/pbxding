@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import signal
 import warnings
 
 from pyVoIP.RTP import RTPParseError, PayloadType, RTPClient
@@ -120,6 +121,17 @@ if __name__ == "__main__":
         myIP=os.getenv("TASSE_IP", ""),  # Local IP address
         callCallback=answer
     )
+
+
+    def handler(signum, frame):
+        print('Signal handler called with signal', signum)
+        phone.stop()
+        exit(0)
+
+    signal.signal(signal.SIGQUIT, handler)
+    signal.signal(signal.SIGTERM, handler)
+    signal.signal(signal.SIGINT, handler)
+    signal.signal(signal.SIGHUP, handler)
 
     try:
         print(f"Starting the pbx ding listener")
