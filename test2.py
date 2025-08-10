@@ -34,6 +34,11 @@ def answer(call):
     except InvalidStateError:
         pass
     except Exception:
+        warnings.warn(
+            "call failed!",
+            RuntimeWarning,
+            stacklevel=2,
+        )
         call.hangup()
 
 
