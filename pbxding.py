@@ -2,7 +2,9 @@
 import os
 import signal
 import warnings
+import logging
 
+from pythonjsonlogger.json import JsonFormatter
 from dotenv import load_dotenv
 from flask import Flask, jsonify
 from prometheus_client import Summary, generate_latest, CONTENT_TYPE_LATEST, Histogram, Info
@@ -15,6 +17,14 @@ i = Info('pbxding', 'Funny Camp Things')
 i.info({'version': '9.9999', 'is': 'also five nines'})
 CALL_TIME = Summary('tasse_call_time', 'Time spent calling things')
 CALL_HIST = Histogram('tasse_calls', 'Call Histogram')
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+logHandler = logging.StreamHandler()
+formatter = JsonFormatter()
+logHandler.setFormatter(formatter)
+logger.addHandler(logHandler)
 
 # Decorate function with metric.
 @CALL_TIME.time()
@@ -32,27 +42,28 @@ def answer(call):
 
         # Transmit audio data bytes
         call.write_audio(data)
-        print(f"got a call from: {call.request.headers["From"]["raw"]}")
 
+        e = {
+            "type": call.request.type,
+            "status": call.request.status,
+            "state": call.state,
+        } | call.request.headers
+        logger.info(f"got a call from", extra=e)
 
         # Wait while call is answered and audio duration not exceeded
         stop = time.time() + (frames / 8000)  # frames / sample rate in seconds
         while time.time() <= stop and call.state == CallState.ANSWERED:
             time.sleep(0.1)
+        logger.info("hanging up call")
         call.hangup()
 
     except InvalidStateError:
         pass
     except Exception:
-        warnings.warn(
-            "call failed!",
-            RuntimeWarning,
-            stacklevel=2,
-        )
+        logger.error(f"call failed", extra=call.request.headers["From"])
         call.hangup()
     finally:
-        print(f"ended call from: {call.request.headers["From"]["raw"]}")
-
+        logger.info(f"call ended", extra=call.request.headers["From"])
 
 def encode_packet(self, payload: bytes) -> bytes:
     if self.preference == PayloadType.PCMU:
@@ -144,6 +155,7 @@ def metrics():
     """ Exposes application metrics in a Prometheus-compatible format. """
     return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
 
+
 if __name__ == "__main__":
     RTPClient.encode_packet = encode_packet
     RTPClient.trans = trans
@@ -159,7 +171,7 @@ if __name__ == "__main__":
 
 
     def handler(signum, frame):
-        print('Signal handler called with signal', signum)
+        logger.info(f"handling interrupt", extra=signum)
         phone.stop()
         exit(0)
 
@@ -169,16 +181,16 @@ if __name__ == "__main__":
     signal.signal(signal.SIGHUP, handler)
 
     try:
-        print(f"Starting the pbx ding listener")
+        logger.info(f"Starting the pbx ding listener")
         phone.start()
 
         connected = True
 
         app.run(host='0.0.0.0', port=8000)
     except KeyboardInterrupt:
-        print(f"Stopping the pbx ding")
+        logger.info(f"Stopping the pbx ding")
         phone.stop()
         exit(0)
     finally:
-        print(f"Stopping the pbx ding")
+        logger.info(f"Stopping the pbx ding")
         phone.stop()

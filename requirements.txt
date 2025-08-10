@@ -2,4 +2,5 @@ pyVoIP==1.6.8
 prometheus-client==0.22.1
 Flask==3.1.1
 python-dotenv==1.1.1
-audioop-lts==0.2.2
+audioop-lts==0.2.2; python_version >= "3.13"
+python-json-logger==3.3.0
