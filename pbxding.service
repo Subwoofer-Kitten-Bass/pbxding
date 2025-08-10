@@ -1,0 +1,7 @@
+[Unit]
+Description=PBX Ding
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/pbxding.py
