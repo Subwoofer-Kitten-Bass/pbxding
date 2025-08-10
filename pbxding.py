@@ -3,7 +3,7 @@ import os
 import signal
 import warnings
 
-from flask import Flask, jsonify, g
+from flask import Flask, jsonify
 from prometheus_client import Summary, generate_latest, CONTENT_TYPE_LATEST
 from pyVoIP.RTP import RTPParseError, PayloadType, RTPClient
 from pyVoIP.VoIP import VoIPPhone, InvalidStateError, CallState
@@ -116,12 +116,13 @@ def trans(self) -> None:
         self.outTimestamp += len(payload)
 
 app = Flask(__name__)
+connected = False
 
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint."""
 
-    if g.connected:
+    if connected:
         status = "OK"
         code = 200
     else:
@@ -142,7 +143,6 @@ if __name__ == "__main__":
     RTPClient.encode_packet = encode_packet
     RTPClient.trans = trans
 
-    g.connected = False
     phone = VoIPPhone(
         os.getenv("TASSE_SIP", "sip.micropoc.de"),   # SIP server IP/hostname
         int(os.getenv("TASSE_PORT", 5060)),               # SIP port
@@ -166,7 +166,8 @@ if __name__ == "__main__":
     try:
         print(f"Starting the pbx ding listener")
         phone.start()
-        g.connected = True
+
+        connected = True
 
         app.run(host='0.0.0.0', port=8000)
     except KeyboardInterrupt:

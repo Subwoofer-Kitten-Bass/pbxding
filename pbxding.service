@@ -9,7 +9,12 @@ KillSignal=SIGINT
 WorkingDirectory=/opt/pbxding/
 EnvironmentFile=/opt/pbxding/.env
 Restart=on-failure
-ExecStart=/opt/pbxding/.venv/python3 -u /opt/pbxding/pbxding.py
+ExecStart=/opt/pbxding/.venv/bin/python3 -u /opt/pbxding/pbxding.py
+ExecStop=kill $MAINPID
+ExecStop=sleep 3
+ExecStop=kill $MAINPID
+ExecStop=sleep 1
+ExecStop=kill -KILL $MAINPID
 
 [Install]
 WantedBy=multi-user.target
