@@ -16,12 +16,10 @@ i.info({'version': '9.9999', 'is': 'also five nines'})
 CALL_TIME = Summary('tasse_call_time', 'Time spent calling things')
 CALL_HIST = Histogram('tasse_calls', 'Call Histogram')
 
-# Decorate function with metric.
-@CALL_TIME.time()
-@CALL_HIST.time()
+
 def answer(call):
-    from_number = call.request.headers["From"]["raw"] #todo only name/number
-    with CALL_TIME.labels(from_number).time(), CALL_HIST.labels(from_number).time():
+    from_address = call.request.headers["From"]["address"]
+    with CALL_TIME.labels(from_address).time(), CALL_HIST.labels(from_address).time():
         try:
             # Load WAV file (8-bit, 8000 Hz, mono)
             f = wave.open(os.getenv("TASSE_KAFFEE", "tasse-lang.wav"), 'rb')
