@@ -6,4 +6,5 @@ After=network-online.target
 [Service]
 WorkingDirectory=/opt/pbxding/
 EnvironmentFile=/opt/pbxding/.env
-ExecStart=/opt/pbxding/.venv/python3 /opt/pbxding/pbxding.py
+Restart=on-failure
+ExecStart=/opt/pbxding/.venv/python3 -u /opt/pbxding/pbxding.py
