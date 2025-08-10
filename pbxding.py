@@ -2,6 +2,7 @@
 import os
 import warnings
 
+from systemd import journal
 from pyVoIP.RTP import RTPParseError, PayloadType, RTPClient
 from pyVoIP.VoIP import VoIPPhone, InvalidStateError, CallState
 import wave
@@ -20,7 +21,7 @@ def answer(call):
 
         # Transmit audio data bytes
         call.write_audio(data)
-        print(f"got a call from: {call.request.headers["From"]["raw"]}")
+        journal.write(f"got a call from: {call.request.headers["From"]["raw"]}")
 
 
         # Wait while call is answered and audio duration not exceeded
