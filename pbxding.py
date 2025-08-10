@@ -122,6 +122,7 @@ if __name__ == "__main__":
     )
 
     try:
+        print(f"Connecting to SIP server")
         phone.start()
         while True:
             time.sleep(1)
