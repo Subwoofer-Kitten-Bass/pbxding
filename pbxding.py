@@ -28,6 +28,9 @@ logger.addHandler(logHandler)
 
 def answer(call):
     from_address = call.request.headers["From"]["address"]
+    if from_address.startswith("00"):
+        from_address = hash_to_4bytes(from_address)
+
     with CALL_TIME.labels(From=from_address).time(), CALL_HIST.labels(From=from_address).time():
         try:
             # Load WAV file (8-bit, 8000 Hz, mono)
@@ -134,6 +137,22 @@ def trans(self) -> None:
         self.outSequence += 1
         self.outTimestamp += len(payload)
 
+
+import hashlib
+
+
+def hash_to_4bytes(input_string):
+    # Hash the string using SHA256
+    hash_object = hashlib.sha256(input_string.encode('utf-8'))
+    hash_bytes = hash_object.digest()
+
+    # Take first 4 bytes and convert to hex
+    first_4_bytes = hash_bytes[:4]
+    hex_string = first_4_bytes.hex()
+
+    # Prefix with 'e'
+    return 'e' + hex_string
+
 load_dotenv()
 app = Flask(__name__)
 connected = False
@@ -175,7 +194,7 @@ if __name__ == "__main__":
 
 
     def handler(signum, frame):
-        logger.info(f"handling interrupt", extra=signum)
+        logger.info(f"handling interrupt", extra={"signal": signum})
         phone.stop()
         exit(0)
 
