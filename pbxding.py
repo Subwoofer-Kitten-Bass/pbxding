@@ -139,7 +139,9 @@ if __name__ == "__main__":
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        pass
+        print(f"Stopping the pbx ding")
+        phone.stop()
+        exit(0)
     finally:
         print(f"Stopping the pbx ding")
         phone.stop()
