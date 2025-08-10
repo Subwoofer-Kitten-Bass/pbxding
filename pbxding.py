@@ -3,11 +3,17 @@ import os
 import signal
 import warnings
 
+from prometheus_client import start_http_server, Summary
 from pyVoIP.RTP import RTPParseError, PayloadType, RTPClient
 from pyVoIP.VoIP import VoIPPhone, InvalidStateError, CallState
 import wave
 import time
 
+# Create a metric to track time spent and requests made.
+CALL_TIME = Summary('tasse_call_time', 'Time spent calling things')
+
+# Decorate function with metric.
+@CALL_TIME.time()
 def answer(call):
     try:
         # Load WAV file (8-bit, 8000 Hz, mono)
@@ -132,6 +138,8 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, handler)
     signal.signal(signal.SIGINT, handler)
     signal.signal(signal.SIGHUP, handler)
+
+    start_http_server(8000)
 
     try:
         print(f"Starting the pbx ding listener")
