@@ -122,11 +122,12 @@ if __name__ == "__main__":
     )
 
     try:
-        print(f"Connecting to SIP server")
+        print(f"Starting the pbx ding listener")
         phone.start()
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         pass
     finally:
+        print(f"Stopping the pbx ding")
         phone.stop()
