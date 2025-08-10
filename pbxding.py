@@ -3,9 +3,8 @@ import os
 import signal
 import warnings
 
-
-from flask import Flask, jsonify
-from prometheus_client import start_http_server, Summary, generate_latest, CONTENT_TYPE_LATEST
+from flask import Flask, jsonify, g
+from prometheus_client import Summary, generate_latest, CONTENT_TYPE_LATEST
 from pyVoIP.RTP import RTPParseError, PayloadType, RTPClient
 from pyVoIP.VoIP import VoIPPhone, InvalidStateError, CallState
 import wave
@@ -121,9 +120,18 @@ app = Flask(__name__)
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint."""
-    # You can include additional checks here (e.g. database connectivity, third-party services)
-    health = 'OK'
-    return health, 200
+
+    if g.connected:
+        status = "OK"
+        code = 200
+    else:
+        status = "UNAVAILABLE"
+        code = 503
+
+    health = {
+        "status":  status,
+    }
+    return jsonify(health), code
 
 @app.route('/metrics', methods=['GET'])
 def metrics():
@@ -134,6 +142,7 @@ if __name__ == "__main__":
     RTPClient.encode_packet = encode_packet
     RTPClient.trans = trans
 
+    g.connected = False
     phone = VoIPPhone(
         os.getenv("TASSE_SIP", "sip.micropoc.de"),   # SIP server IP/hostname
         int(os.getenv("TASSE_PORT", 5060)),               # SIP port
@@ -157,6 +166,7 @@ if __name__ == "__main__":
     try:
         print(f"Starting the pbx ding listener")
         phone.start()
+        g.connected = True
 
         app.run(host='0.0.0.0', port=8000)
     except KeyboardInterrupt:
