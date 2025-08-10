@@ -15,8 +15,8 @@ import time
 
 i = Info('pbxding', 'Funny Camp Things')
 i.info({'version': '9.9999', 'is': 'also five nines'})
-CALL_TIME = Summary('tasse_call_time', 'Time spent calling things')
-CALL_HIST = Histogram('tasse_calls', 'Call Histogram')
+CALL_TIME = Summary('tasse_call_time', 'Time spent calling things', ["From"])
+CALL_HIST = Histogram('tasse_calls', 'Call Histogram', ["From"])
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
