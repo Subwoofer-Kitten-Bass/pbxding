@@ -4,4 +4,6 @@ Requires=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/local/bin/pbxding.py
+WorkingDirectory=/opt/pbxding/
+EnvironmentFile=/opt/pbxding/.env
+ExecStart=/opt/pbxding/.venv/python3 /opt/pbxding/pbxding.py

@@ -120,6 +120,12 @@ if __name__ == "__main__":
         myIP=os.getenv("TASSE_IP", ""),  # Local IP address
         callCallback=answer
     )
-    phone.start()
-    input("Press enter to disable the phone\n")
-    phone.stop()
+
+    try:
+        phone.start()
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        phone.stop()
