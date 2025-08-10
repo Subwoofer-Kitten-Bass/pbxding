@@ -39,9 +39,6 @@ def answer(call):
         while time.time() <= stop and call.state == CallState.ANSWERED:
             time.sleep(0.1)
 
-        # Hang up after playing
-        call.hangup()
-
     except InvalidStateError:
         pass
     except Exception:
@@ -50,6 +47,8 @@ def answer(call):
             RuntimeWarning,
             stacklevel=2,
         )
+    finally:
+        print(f"ended from: {call.request.headers["From"]["raw"]}")
         call.hangup()
 
 
