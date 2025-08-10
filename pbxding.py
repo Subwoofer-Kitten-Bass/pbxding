@@ -26,44 +26,48 @@ formatter = JsonFormatter()
 logHandler.setFormatter(formatter)
 logger.addHandler(logHandler)
 
-# Decorate function with metric.
-@CALL_TIME.time()
-@CALL_HIST.time()
 def answer(call):
-    try:
-        # Load WAV file (8-bit, 8000 Hz, mono)
-        f = wave.open(os.getenv("TASSE_KAFFEE", "tasse-lang.wav"), 'rb')
-        frames = f.getnframes()
-        data = f.readframes(frames)
-        f.close()
+    from_address = call.request.headers["From"]["address"]
+    with CALL_TIME.labels(From=from_address).time(), CALL_HIST.labels(From=from_address).time():
+        try:
+            # Load WAV file (8-bit, 8000 Hz, mono)
+            f = wave.open(os.getenv("TASSE_KAFFEE", "tasse-lang.wav"), 'rb')
+            frames = f.getnframes()
+            data = f.readframes(frames)
+            f.close()
 
-        # Answer the call
-        call.answer()
+            # Answer the call
+            call.answer()
+            # Transmit audio data bytes
+            call.write_audio(data)
 
-        # Transmit audio data bytes
-        call.write_audio(data)
+            e = {
+                "type": call.request.type,
+                "status": call.request.status,
+                "state": call.state,
+            } | call.request.headers
+            logger.info(f"got a call from", extra=e)
 
-        e = {
-            "type": call.request.type,
-            "status": call.request.status,
-            "state": call.state,
-        } | call.request.headers
-        logger.info(f"got a call from", extra=e)
+            # Wait while call is answered and audio duration not exceeded
+            stop = time.time() + (frames / 8000)  # frames / sample rate in seconds
+            while time.time() <= stop and call.state == CallState.ANSWERED:
+                time.sleep(0.1)
+            logger.info("hanging up call")
+            call.hangup()
 
-        # Wait while call is answered and audio duration not exceeded
-        stop = time.time() + (frames / 8000)  # frames / sample rate in seconds
-        while time.time() <= stop and call.state == CallState.ANSWERED:
-            time.sleep(0.1)
-        logger.info("hanging up call")
-        call.hangup()
+            # Wait while call is answered and audio duration not exceeded
+            stop = time.time() + (frames / 8000)  # frames / sample rate in seconds
+            while time.time() <= stop and call.state == CallState.ANSWERED:
+                time.sleep(0.1)
+            call.hangup()
 
-    except InvalidStateError:
-        pass
-    except Exception:
-        logger.error(f"call failed", extra=call.request.headers["From"])
-        call.hangup()
-    finally:
-        logger.info(f"call ended", extra=call.request.headers["From"])
+        except InvalidStateError:
+            pass
+        except Exception:
+            logger.error(f"call failed", extra=call.request.headers["From"])
+            call.hangup()
+        finally:
+            logger.info(f"call ended", extra=call.request.headers["From"])
 
 def encode_packet(self, payload: bytes) -> bytes:
     if self.preference == PayloadType.PCMU:
