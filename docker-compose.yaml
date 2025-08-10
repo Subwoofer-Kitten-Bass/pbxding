@@ -1,0 +1,8 @@
+services:
+  reverse-proxy:
+    image: ghcr.io/subwoofer-kitten-bass/pbxding:main
+
+networks:
+  host:
+    name: host
+    external: true
