@@ -4,13 +4,14 @@ import signal
 import warnings
 
 from flask import Flask, jsonify
-from prometheus_client import Summary, generate_latest, CONTENT_TYPE_LATEST, Histogram
+from prometheus_client import Summary, generate_latest, CONTENT_TYPE_LATEST, Histogram, Info
 from pyVoIP.RTP import RTPParseError, PayloadType, RTPClient
 from pyVoIP.VoIP import VoIPPhone, InvalidStateError, CallState
 import wave
 import time
 
-# Create a metric to track time spent and requests made.
+i = Info('pbxding', 'Funny Camp Things')
+i.info({'version': '9.9999', 'is': 'also five nines'})
 CALL_TIME = Summary('tasse_call_time', 'Time spent calling things')
 CALL_HIST = Histogram('tasse_calls', 'Call Histogram')
 
