@@ -3,6 +3,7 @@ import os
 import signal
 import warnings
 
+from dotenv import load_dotenv
 from flask import Flask, jsonify
 from prometheus_client import Summary, generate_latest, CONTENT_TYPE_LATEST, Histogram, Info
 from pyVoIP.RTP import RTPParseError, PayloadType, RTPClient
@@ -118,6 +119,7 @@ def trans(self) -> None:
         self.outSequence += 1
         self.outTimestamp += len(payload)
 
+load_dotenv()
 app = Flask(__name__)
 connected = False
 
