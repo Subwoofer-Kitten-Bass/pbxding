@@ -10,7 +10,7 @@ import time
 def answer(call):
     try:
         # Load WAV file (8-bit, 8000 Hz, mono)
-        f = wave.open('tasse-lang.wav', 'rb')
+        f = wave.open(os.getenv("TASSE_KAFFEE", "tasse-lang.wav"), 'rb')
         frames = f.getnframes()
         data = f.readframes(frames)
         f.close()
