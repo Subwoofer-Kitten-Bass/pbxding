@@ -128,11 +128,7 @@ def trans(self) -> None:
             try:
                 self.sout.sendto(packet, (self.outIP, self.outPort))
             except OSError:
-                warnings.warn(
-                    "RTP Packet failed to send!",
-                    RuntimeWarning,
-                    stacklevel=2,
-                )
+                logger.info(f"RTP Packet failed to send!", extra={"ip":self.outIP, "port":self.outPort})
 
         self.outSequence += 1
         self.outTimestamp += len(payload)
