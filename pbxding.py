@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import signal
+import warnings
 import logging
 
 from pythonjsonlogger.json import JsonFormatter
@@ -25,10 +26,6 @@ formatter = JsonFormatter()
 logHandler.setFormatter(formatter)
 logger.addHandler(logHandler)
 
-# Load WAV file (8-bit, 8000 Hz, mono)
-with wave.open(os.getenv("TASSE_KAFFEE", "tasse-lang.wav"), 'rb') as f:
-    data = f.readframes(f.getnframes())
-
 def answer(call):
     from_address = call.request.headers["From"]["address"]
     if from_address.startswith("00"):
@@ -36,6 +33,12 @@ def answer(call):
 
     with CALL_TIME.labels(From=from_address).time(), CALL_HIST.labels(From=from_address).time():
         try:
+            # Load WAV file (8-bit, 8000 Hz, mono)
+            f = wave.open(os.getenv("TASSE_KAFFEE", "tasse-lang.wav"), 'rb')
+            frames = f.getnframes()
+            data = f.readframes(frames)
+            f.close()
+
             # Answer the call
             call.answer()
             # Transmit audio data bytes
