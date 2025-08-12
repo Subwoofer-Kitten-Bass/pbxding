@@ -41,8 +41,6 @@ def answer(call):
 
             # Answer the call
             call.answer()
-            # Transmit audio data bytes
-            call.write_audio(data)
 
             e = {
                 "type": call.request.type,
@@ -51,19 +49,21 @@ def answer(call):
             } | call.request.headers
             logger.info(f"got a call from", extra=e)
 
-            # Wait while call is answered and audio duration not exceeded
-            stop = time.time() + (frames / 8000)  # frames / sample rate in seconds
-            while time.time() <= stop and call.state == CallState.ANSWERED:
-                time.sleep(0.1)
+            endless = os.getenv("KAFFEE_ENDLESS", "True") == "True"
+
+            while True:
+                # Transmit audio data bytes
+                call.write_audio(data)
+
+                # Wait while call is answered and audio duration not exceeded
+                stop = time.time() + (frames / 8000)  # frames / sample rate in seconds
+                while time.time() <= stop and call.state == CallState.ANSWERED:
+                    time.sleep(0.1)
+                if not endless:
+                    break
+
             logger.info("hanging up call")
             call.hangup()
-
-            # Wait while call is answered and audio duration not exceeded
-            stop = time.time() + (frames / 8000)  # frames / sample rate in seconds
-            while time.time() <= stop and call.state == CallState.ANSWERED:
-                time.sleep(0.1)
-            call.hangup()
-
         except InvalidStateError:
             pass
         except Exception:
@@ -185,7 +185,9 @@ if __name__ == "__main__":
         os.getenv("TASSE_USER", ""),             # Username
         os.getenv("TASSE_PASS", ""),     # Password
         myIP=os.getenv("TASSE_IP", ""),  # Local IP address
-        callCallback=answer
+        callCallback=answer,
+        rtpPortLow=int(os.getenv("KAFFEE_RTP_PORT_LOW", 10000)),
+        rtpPortHigh=int(os.getenv("KAFFEE_RTP_PORT_HIGH", 11000)),
     )
 
 
@@ -205,7 +207,7 @@ if __name__ == "__main__":
 
         connected = True
 
-        app.run(host='0.0.0.0', port=8000)
+        app.run(host='0.0.0.0', port=int(os.getenv('KAFFEE_WEB_PORT', '8000')))
     except KeyboardInterrupt:
         logger.info(f"Stopping the pbx ding")
         phone.stop()
